@@ -1,4 +1,5 @@
 import * as yup from "yup"
+import { isValidObjectId } from "mongoose";
 export const CreateUserSchema = yup.object().shape({
     name: yup.string().trim().required("Tên đang thiếu!").min(3, "Tên quá ngắn!").max(40, "Tên quá dài!"),
     email: yup.string().trim().required("Email đang thiếu!").email("Email không hợp lệ!"),
@@ -20,3 +21,13 @@ export const CreateUserSchema = yup.object().shape({
       "Mật khẩu phải có ít nhất 8 ký tự và chỉ chứa chữ cái, chữ số và ký tự đặc biệt!"
     ),
 });
+
+export const EmailVerificationBody = yup.object().shape({
+  token: yup.string().trim().required("invalid token!"),
+  userId: yup.string().transform(function(value){
+    if(this.isType(value) && isValidObjectId(value)){
+      return value
+    } 
+      return ""
+  }).required("Invalid userId!")
+})

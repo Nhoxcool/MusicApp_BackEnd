@@ -1,6 +1,8 @@
 // interface (typescript)
 import { Model, ObjectId, Schema, model } from "mongoose";
 import { hash, compare } from "bcrypt";
+
+
 interface EmailVerificationTokenDocument {
     owner: ObjectId;
     token: string;
@@ -30,16 +32,16 @@ const emailVerificationTokenSchema = new Schema<EmailVerificationTokenDocument, 
     }
 });
 
-emailVerificationTokenSchema.pre('save', async function(next){
-    if(this.isModified('token')){
-        this.token = await hash(this.token, 10);
+emailVerificationTokenSchema.pre("save", async function (next) {
+    if (this.isModified("token")) {
+      this.token = await hash(this.token, 10);
     }
     next();
-})
-
-emailVerificationTokenSchema.methods.compareToken = async function(token) {
-    const result = await compare(token, this.token)
+  });
+  
+  emailVerificationTokenSchema.methods.compareToken = async function (token) {
+    const result = await compare(token, this.token);
     return result;
-}
+  };
 
 export default model("EmailVerificationToken", emailVerificationTokenSchema) as Model<EmailVerificationTokenDocument, {}, Methods>;

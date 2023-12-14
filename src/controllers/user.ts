@@ -1,38 +1,42 @@
-import { CreateUser } from "#/@types/user";
+import { CreateUser, VerifyEmailRequest } from "#/@types/user";
 import { RequestHandler } from "express";
-import nodemailer from "nodemailer";
+
 import User from "#/models/user";
-import EmailVerificationToken from "#/models/emailVerificationToken";
-import { MAILTRAP_PASSWORD, MAILTRAP_USER } from "#/utils/variables";
 import { generateToken } from "#/utils/helper";
+import { sendVerificationMail } from "#/utils/mail";
+import EmailVerificationToken from "#/models/emailVerificationToken";
+
 
 export const create: RequestHandler = async (req: CreateUser, res) => {
     const {email, password, name} = req.body;
 
-    
-
     const user = await User.create({email, password, name});
     // send verification email
-    var transport = nodemailer.createTransport({
-        host: "sandbox.smtp.mailtrap.io",
-        port: 2525,
-        auth: {
-          user: MAILTRAP_USER,
-          pass: MAILTRAP_PASSWORD
-        }
-      });
-
     const token = generateToken();
-    const verificationToken = EmailVerificationToken.create({
-        owner: user._id,
-        token
-    })
+    sendVerificationMail(token, {name, email, userId:  user._id.toString() })
+
+    res.status(201).json({ user: {id: user._id, name, email} })
+};
+
+export const verifyEmail: RequestHandler = async (req: VerifyEmailRequest, res) => {
+  const { userId, token } = req.body;
+
+  const verificationToken = await EmailVerificationToken.findOne({
+    owner: userId,
+  });
+
+  if (!verificationToken)
+    return res.status(403).json({ error: "Invalid token!" });
+
+  const matched = await verificationToken.compareToken(token);
+  if (!matched) return res.status(403).json({ error: "Invalid token!" });
+
+  await User.findByIdAndUpdate(userId, {
+    verified: true,
+  });
+  await EmailVerificationToken.findByIdAndDelete(verificationToken._id);
+
+  res.json({ message: "Your email is verified." });
+};
 
 
-    transport.sendMail({
-        to: user.email,
-        from: "NhaChill@gmail.com",
-        html: `<h1>Mã OTP của bạn là: ${verificationToken}<h1>`,
-    })
-    res.status(201).json({ user })
-}

@@ -19,6 +19,5 @@ export const validate = (schema: any): RequestHandler => {
                 res.status(422).json({error: error.message})
             }
         }
-
     };
 };

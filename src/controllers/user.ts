@@ -3,7 +3,7 @@ import { RequestHandler } from "express";
 
 import User from "#/models/user";
 import { generateToken } from "#/utils/helper";
-import { sendForgetPasswordlink, sendVerificationMail } from "#/utils/mail";
+import { sendForgetPasswordlink, sendReSetSuccessEmail, sendVerificationMail } from "#/utils/mail";
 import EmailVerificationToken from "#/models/emailVerificationToken";
 import PasswordResetToken from "#/models/passwordResetToken";
 import { isValidObjectId } from "mongoose";
@@ -20,7 +20,7 @@ export const create: RequestHandler = async (req: CreateUser, res) => {
 
     const newToken = await EmailVerificationToken.create({
       owner: user._id,
-      token
+      token 
     })
 
     sendVerificationMail(token, {name, email, userId:  user._id.toString() })
@@ -106,4 +106,34 @@ export const generateForgetPasswordLink: RequestHandler = async (req , res) => {
 
   res.json({message:"Kiểm tra ở mail đã đăng ký của bạn!"})
 };
+
+
+// check request thay đổi mật khẩu
+export const grantValid: RequestHandler = async (req , res) => {
+  res.json({valid: true})
+};
+
+// Thay đổi mật khẩu
+export const updatePassword: RequestHandler = async (req, res) => {
+  const { password, userId } = req.body;
+
+  const user = await User.findById(userId);
+  if (!user) return res.status(403).json({ error: "Unauthorized access!" });
+
+  const matched = await user.comparePassword(password);
+  if (matched)
+    return res
+      .status(422)
+      .json({ error: "Mật khẩu mới phải khác với mật khẩu cũ!" });
+
+  user.password = password;
+  await user.save();
+
+  await PasswordResetToken.findOneAndDelete({ owner: user._id });
+  // send the success email
+
+  sendReSetSuccessEmail(user.name, user.email);
+  res.json({ message: "Mật khẩu Được thay đổi thành công!." });
+};
+
 

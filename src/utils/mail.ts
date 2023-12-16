@@ -1,7 +1,7 @@
 import nodemailer from "nodemailer";
 import path from "path";
 
-import { MAILTRAP_PASSWORD, MAILTRAP_USER, VERIFICATION_EMAIL } from "#/utils/variables";
+import { MAILTRAP_PASSWORD, MAILTRAP_USER, SIGN_IN_URL, VERIFICATION_EMAIL } from "#/utils/variables";
 import { generateTemplate } from "#/mail/template";
 
 const generateMailTransporter = () => {
@@ -80,6 +80,38 @@ export const sendForgetPasswordlink = async (options: Options) => {
         banner:"cid:forget_password",
         link,
         btnTitle: "Đổi mật khẩu mới",
+      }),
+      attachments: [
+        {
+          filename: "logo.png",
+          path: path.join(__dirname, "../mail/logo.png"),
+          cid: "logo"
+        }, 
+        {
+          filename: "forget_password.png",
+          path: path.join(__dirname, "../mail/forget_password.png"),
+          cid: "forget_password"
+        }
+      ]
+  }) 
+}
+
+export const sendReSetSuccessEmail = async (name: string, email: string) => {
+  const transport = generateMailTransporter();
+
+  const message = `Xin chào ${name}, Mật khẩu của bạn đã vừa được thay đổi thành công. Giờ bạn có thể đăng nhập với mật khẩu mới`
+  
+  transport.sendMail({
+      to: email,
+      from: VERIFICATION_EMAIL,
+      subject: "Mật khẩu đã được thay đổi thành công",
+      html: generateTemplate({
+        title: "Mật khẩu đã được thay đổi thành công",
+        message: message,
+        logo:"cid:logo",
+        banner:"cid:forget_password",
+        link: SIGN_IN_URL,
+        btnTitle: "Đăng nhập",
       }),
       attachments: [
         {

@@ -1,5 +1,6 @@
 import { CreateUser, VerifyEmailRequest } from "#/@types/user";
 import { RequestHandler } from "express";
+import jwt from "jsonwebtoken";
 
 import User from "#/models/user";
 import { generateToken } from "#/utils/helper";
@@ -8,7 +9,7 @@ import EmailVerificationToken from "#/models/emailVerificationToken";
 import PasswordResetToken from "#/models/passwordResetToken";
 import { isValidObjectId } from "mongoose";
 import crypto from 'crypto'
-import { PASSWORD_RESET_LINK } from "#/utils/variables";
+import { JWT_SERECT, PASSWORD_RESET_LINK } from "#/utils/variables";
 
 // Tạo tài khoản
 export const create: RequestHandler = async (req: CreateUser, res) => {
@@ -18,7 +19,7 @@ export const create: RequestHandler = async (req: CreateUser, res) => {
     // send verification email
     const token = generateToken();
 
-    const newToken = await EmailVerificationToken.create({
+    await EmailVerificationToken.create({
       owner: user._id,
       token 
     })
@@ -135,5 +136,29 @@ export const updatePassword: RequestHandler = async (req, res) => {
   sendReSetSuccessEmail(user.name, user.email);
   res.json({ message: "Mật khẩu Được thay đổi thành công!." });
 };
+
+// Đăng nhập
+export const signIn: RequestHandler = async (req, res) => {
+  const { email, password } = req.body;
+
+  const user = await User.findOne({
+    email
+  })
+
+  if(!user) return res.status(403).json({error: "Email hoặc mật khẩu không đúng!"})
+
+  const matched = await user.comparePassword(password)
+  if(!matched) return res.status(403).json({error: "Email hoặc mật khẩu không đúng!"})
+
+  //Tạo Jason Web Token
+  const token = jwt.sign({userId: user._id}, JWT_SERECT);
+  user.tokens.push(token)
+
+  await user.save();
+
+  res.json({profile: {id: user._id, name: user.name, email: user.email, verified: user.verified, avatar: user.avatar?.url, followers: user.followers.length, fowllowings: user.followings.length}, token})
+};
+
+
 
 

@@ -23,14 +23,17 @@ export const CreateUserSchema = yup.object().shape({
 });
 
 export const TokenAnhIdValidation = yup.object().shape({
-  token: yup.string().trim().required("invalid token!"),
-  userId: yup.string().transform(function(value){
-    if(this.isType(value) && isValidObjectId(value)){
-      return value
-    } 
-      return ""
-  }).required("Invalid userId!")
-})
+  token: yup.string().trim().required("Invalid token!"),
+  userId: yup
+    .string()
+    .transform(function (value) {
+      if (this.isType(value) && isValidObjectId(value)) {
+        return value;
+      }
+      return "";
+    })
+    .required("Invalid userId!"),
+});
 
 export const UpdatePasswordSchema = yup.object().shape({
   token: yup.string().trim().required("invalid token!"),
@@ -59,5 +62,8 @@ export const UpdatePasswordSchema = yup.object().shape({
   ),
 })
 
-
+export const EmailValidationSchema = yup.object().shape({
+  email: yup.string().trim().required("Email đang thiếu!").email("Email không hợp lệ!"),
+  password: yup.string().trim().required("Mật khẩu đang thiếu!"),
+})
 

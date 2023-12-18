@@ -72,7 +72,7 @@ export const sendForgetPasswordlink = async (options: Options) => {
   transport.sendMail({
       to: email,
       from: VERIFICATION_EMAIL,
-      subject: "Reset Password Link",
+      subject: "Link Đổi Mật Khẩu",
       html: generateTemplate({
         title: "Quên Mật Khẩu",
         message: message,

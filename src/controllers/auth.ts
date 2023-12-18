@@ -3,13 +3,16 @@ import { RequestHandler } from "express";
 import jwt from "jsonwebtoken";
 
 import User from "#/models/user";
-import { generateToken } from "#/utils/helper";
+import { formatProfile, generateToken } from "#/utils/helper";
 import { sendForgetPasswordlink, sendReSetSuccessEmail, sendVerificationMail } from "#/utils/mail";
 import EmailVerificationToken from "#/models/emailVerificationToken";
 import PasswordResetToken from "#/models/passwordResetToken";
 import { isValidObjectId } from "mongoose";
 import crypto from 'crypto'
-import { JWT_SERECT, PASSWORD_RESET_LINK } from "#/utils/variables";
+import { JWT_SECRET, PASSWORD_RESET_LINK } from "#/utils/variables";
+import { RequestWithFiles } from "#/middleware/fileParse";
+import cloudinary from "#/cloud";
+import formidable from "formidable";
 
 // Tạo tài khoản
 export const create: RequestHandler = async (req: CreateUser, res) => {
@@ -151,7 +154,7 @@ export const signIn: RequestHandler = async (req, res) => {
   if(!matched) return res.status(403).json({error: "Email hoặc mật khẩu không đúng!"})
 
   //Tạo Jason Web Token
-  const token = jwt.sign({userId: user._id}, JWT_SERECT);
+  const token = jwt.sign({userId: user._id}, JWT_SECRET);
   user.tokens.push(token)
 
   await user.save();
@@ -159,6 +162,62 @@ export const signIn: RequestHandler = async (req, res) => {
   res.json({profile: {id: user._id, name: user.name, email: user.email, verified: user.verified, avatar: user.avatar?.url, followers: user.followers.length, fowllowings: user.followings.length}, token})
 };
 
+//Cập nhật Profile
+export const updateProfile: RequestHandler = async (req: RequestWithFiles, res) => {
+  const { name } = req.body;
+  const avatar = req.files?.avatar as formidable.File
 
+  const user = await User.findById(req.user.id)
+  if(!user) throw new Error ("Có gì đó không đúng, không tìm thấy người dùng!")
 
+  //update tên
+  if(typeof name !== "string") return res.status(422).json({error: "Tên không hợp lệ!"})
+
+  if(name.trim().length < 2) return res.status(422).json({error: "Tên không hợp lệ!"})
+
+  user.name = name;
+
+  //update avatar
+  if(avatar){
+    //Thay avatar mới từ avatar cũ
+    if(user.avatar?.publicId){
+     await cloudinary.uploader.destroy(user.avatar?.publicId)
+    }
+    //Them avatar mới
+    const {secure_url, public_id} = await cloudinary.uploader.upload(avatar.filepath, {
+      width: 300,
+      heigth: 300,
+      crop: "thumb",
+      gravity: "face"
+    })
+
+    user.avatar = {url: secure_url, publicId: public_id}
+  }
+
+  await user.save()
+
+  res.json({ profile: formatProfile(user)})
+};
+
+//Gửi profile
+export const sendProfile: RequestHandler = (req, res) => {
+  res.json({profile: req.user})
+}
+
+//Đăng xuất
+export const logOut: RequestHandler = async (req, res) => {
+  // Đăng xuất 
+  const {fromAll} = req.query
+  const token = req.token
+
+  const user = await User.findById(req.user.id)
+  if(!user) throw new Error ("Có gì đó không đúng, không tìm thấy người dùng!")
+
+  // Đăng xuất khỏi tất cả thiết bị
+  if(fromAll === "yes") user.tokens = []
+  else user.tokens = user.tokens.filter((t) => t !== token)
+
+  await user.save();
+  res.json({success: true})
+}
 

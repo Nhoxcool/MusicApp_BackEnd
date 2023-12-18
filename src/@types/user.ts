@@ -26,8 +26,9 @@ declare global {
         verified: boolean, 
         avatar?: string, 
         followers: number, 
-        fowllowings: number
+        followings: number
       }
+      token: string;
     }
   }
 }

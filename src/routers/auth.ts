@@ -1,9 +1,9 @@
-import { create, generateForgetPasswordLink,  grantValid,  sendReVerificationToken, signIn, updatePassword, verifyEmail } from "#/controllers/user";
+import { create, generateForgetPasswordLink,  grantValid,  logOut,  sendProfile,  sendReVerificationToken, signIn, updatePassword, updateProfile, verifyEmail } from "#/controllers/auth";
 import { isValidPasswordResetToken, mustAuth } from "#/middleware/auth";
 import { validate } from "#/middleware/validator";
 import { CreateUserSchema, EmailValidationSchema, TokenAnhIdValidation, UpdatePasswordSchema } from "#/utils/validationSchema";
 import { Router } from "express";
-import fileParser, { RequestWithFiles } from "#/middleware/fileParse";
+import fileParser from "#/middleware/fileParse";
 const router = Router();
 
 //User handle
@@ -16,14 +16,15 @@ router.post("/verify-pass-reset-token", validate(TokenAnhIdValidation), isValidP
 router.post("/update-password", validate(UpdatePasswordSchema), isValidPasswordResetToken, updatePassword)
 router.post("/sign-in", validate(EmailValidationSchema), signIn)
 //get method
-router.get("/is-auth", mustAuth, (req,res) => { res.json({ profile: req.user, }) })
+router.get("/is-auth", mustAuth, sendProfile)
 
 
 
 // Upload file
-router.post('/update-profile', fileParser, (req: RequestWithFiles, res) => {
-    console.log(req.files)
-    res.json({ok: true})
-})
+router.post('/update-profile', mustAuth, fileParser, updateProfile)
+
+//logout
+router.post("/log-out", mustAuth, logOut)
+
 
 export default router;

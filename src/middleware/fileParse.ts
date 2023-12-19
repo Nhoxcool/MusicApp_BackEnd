@@ -6,6 +6,7 @@ export interface RequestWithFiles extends Request {
 }
 
 const fileParser: RequestHandler = async (req: RequestWithFiles, res, next) => {
+  //chỉ xử lí file upload dưới dạng form-data
   if (!req.headers["content-type"]?.startsWith("multipart/form-data;"))
     return res.status(422).json({ error: "Only accepts form-data!" });
  

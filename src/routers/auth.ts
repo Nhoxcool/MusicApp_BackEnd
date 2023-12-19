@@ -20,11 +20,12 @@ router.get("/is-auth", mustAuth, sendProfile)
 
 
 
-// Upload file
+// Upload Profile
 router.post('/update-profile', mustAuth, fileParser, updateProfile)
 
 //logout
 router.post("/log-out", mustAuth, logOut)
+
 
 
 export default router;

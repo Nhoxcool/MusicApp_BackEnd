@@ -1,5 +1,6 @@
 import * as yup from "yup"
 import { isValidObjectId } from "mongoose";
+import { categories } from "./audio_category";
 export const CreateUserSchema = yup.object().shape({
     name: yup.string().trim().required("Tên đang thiếu!").min(3, "Tên quá ngắn!").max(40, "Tên quá dài!"),
     email: yup.string().trim().required("Email đang thiếu!").email("Email không hợp lệ!"),
@@ -65,5 +66,11 @@ export const UpdatePasswordSchema = yup.object().shape({
 export const EmailValidationSchema = yup.object().shape({
   email: yup.string().trim().required("Email đang thiếu!").email("Email không hợp lệ!"),
   password: yup.string().trim().required("Mật khẩu đang thiếu!"),
+})
+
+export const AudioValidationSchema = yup.object().shape({
+  title: yup.string().required("Tiêu đề đang bị thiếu!"),
+  about: yup.string().required("Mô tả đang bị thiếu!"),
+  category: yup.string().oneOf(categories, "Thể loại không hợp lệ!").required("Thể loại đang bị thiếu!"),
 })
 

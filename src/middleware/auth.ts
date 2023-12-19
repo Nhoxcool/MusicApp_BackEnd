@@ -43,3 +43,10 @@ export const mustAuth: RequestHandler = async (req, res, next) => {
 
   next();
 };
+
+export const isVerified: RequestHandler = (req, res, next) => {
+  if(!req.user.verified ) return res.status(403).json({error: "Vui lòng xác thực email của bạn trước"})
+
+  next();
+}
+

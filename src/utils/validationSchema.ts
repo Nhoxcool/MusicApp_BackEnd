@@ -74,3 +74,27 @@ export const AudioValidationSchema = yup.object().shape({
   category: yup.string().oneOf(categories, "Thể loại không hợp lệ!").required("Thể loại đang bị thiếu!"),
 })
 
+
+export const NewPlaylistValidationSchema = yup.object().shape({
+  title: yup.string().required("Tiêu đề đang bị thiếu!"),
+  resId: yup.string().transform(function(value) {
+    return this.isType(value) && isValidObjectId(value) ? value : ""
+  }),
+  visibility: yup.string().oneOf(["public", "private"], "Hiện thị phải ở chế độ công khai hoặc không công khai!").required("Hiện thị chưa được xác định!"),
+})
+
+export const OldPlaylistValidationSchema = yup.object().shape({
+  title: yup.string().required("Tiêu đề đang bị thiếu!"),
+  // kiểm tra audio id
+  item: yup.string().transform(function(value) {
+    return this.isType(value) && isValidObjectId(value) ? value : ""
+  }),
+  // kiểm tra playlist id
+  id: yup.string().transform(function(value) {
+    return this.isType(value) && isValidObjectId(value) ? value : ""
+  }),
+  visibility: yup.string().oneOf(["public", "private"], "Hiện thị phải ở chế độ công khai hoặc không công khai!"),
+  // .required("Hiện thị chưa được xác định!"),
+})
+
+

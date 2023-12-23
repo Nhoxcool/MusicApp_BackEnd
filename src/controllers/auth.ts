@@ -18,6 +18,9 @@ import formidable from "formidable";
 export const create: RequestHandler = async (req: CreateUser, res) => {
     const {email, password, name} = req.body;
 
+    const oldUser = await User.findOne({email})
+    if(oldUser) return res.status(403).json({error: "Email đã được sử dụng!"})
+
     const user = await User.create({email, password, name});
     // send verification email
     const token = generateToken();
@@ -62,6 +65,8 @@ export const sendReVerificationToken: RequestHandler = async (req , res) => {
 
   const user = await User.findById(userId)
   if(!user) return res.status(403).json({error: "Invalid request!"})
+
+  if(user.verified) return res.status(422).json({ error: "Tài khoản email của bạn đã được xác thực từ trước!"})
 
   await EmailVerificationToken.findOneAndDelete({
     owner: userId,
@@ -159,7 +164,7 @@ export const signIn: RequestHandler = async (req, res) => {
 
   await user.save();
 
-  res.json({profile: {id: user._id, name: user.name, email: user.email, verified: user.verified, avatar: user.avatar?.url, followers: user.followers.length, fowllowings: user.followings.length}, token})
+  res.json({profile: {id: user._id, name: user.name, email: user.email, verified: user.verified, avatar: user.avatar?.url, followers: user.followers.length, followings: user.followings.length}, token})
 };
 
 //Cập nhật Profile

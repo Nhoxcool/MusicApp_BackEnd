@@ -7,6 +7,8 @@ import cron from 'node-cron';
 //     console.log("I am running!");
 // })
 
+//0 0 * * *
+
 const generatedPlaylist = async () => {
     const result = await Audio.aggregate([
         {$sort: {likes: -1}},

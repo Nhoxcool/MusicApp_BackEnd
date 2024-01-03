@@ -61,58 +61,58 @@ export const toggleFavorite: RequestHandler = async (req,res) => {
     res.json({status})
 } 
 
-export const getFavorite: RequestHandler = async (req,res) => {
+export const getFavorites: RequestHandler = async (req, res) => {
     const userID = req.user.id;
-    const {limit = "20", pageNo = "0"} = req.query as paginationQuery
-
+    const { limit = "20", pageNo = "0" } = req.query as paginationQuery;
+  
     const favorites = await Favorite.aggregate([
-        {
-            $match: ({ owner: userID })
+      { $match: { owner: userID } },
+      {
+        $project: {
+          audioIds: {
+            $slice: [
+              "$items",
+              parseInt(limit) * parseInt(pageNo),
+              parseInt(limit),
+            ],
+          },
         },
-        {
-            $project: {
-                audioIds: {
-                    $slice: ["$items", parseInt(limit) * parseInt(pageNo), parseInt(limit)]
-                }
-            }
+      },
+      { $unwind: "$audioIds" },
+      {
+        $lookup: {
+          from: "audios",
+          localField: "audioIds",
+          foreignField: "_id",
+          as: "audioInfo",
         },
-        {$unwind: "$audioIds"},
-        {
-            $lookup: {
-                from: "audios", 
-                localField: "audioIds",
-                foreignField: "_id",
-                as: "audioInfo"
-            }
+      },
+      { $unwind: "$audioInfo" },
+      {
+        $lookup: {
+          from: "users",
+          localField: "audioInfo.owner",
+          foreignField: "_id",
+          as: "ownerInfo",
         },
-        {$unwind: "$audioInfo"},
-        {
-            $lookup: {
-                from: "users", 
-                localField: "audioInfo.owner",
-                foreignField: "_id",
-                as: "ownerInfo"
-            }
+      },
+      { $unwind: "$ownerInfo" },
+      {
+        $project: {
+          _id: 0,
+          id: "$audioInfo._id",
+          title: "$audioInfo.title",
+          about: "$audioInfo.about",
+          category: "$audioInfo.category",
+          file: "$audioInfo.file.url",
+          poster: "$audioInfo.poster.url",
+          owner: { name: "$ownerInfo.name", id: "$ownerInfo._id" },
         },
-        {$unwind: "$ownerInfo"},
-        {
-            $project: {
-                _id: 0,
-                id: "$audioInfo._id",
-                title: "audioInfo.title",
-                about: "audioInfo.about",
-                category: "audioInfo.category",
-                file: "$audioInfo.file.url",
-                poster: "$audioÌnfo.poster.url",
-                owner: {name: "$ownerInfo.name", id: "$ownerInfo._id"},
-            }
-        }
-    ])
-
-    return res.json({audios: favorites})
-
-} 
-
+      },
+    ]);
+  
+    res.json({ audios: favorites });
+  };
 export const getIsFavorite: RequestHandler = async (req,res) => {
     const audioId = req.query.audioId as String
 

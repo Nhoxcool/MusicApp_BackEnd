@@ -168,40 +168,47 @@ export const signIn: RequestHandler = async (req, res) => {
 };
 
 //Cập nhật Profile
-export const updateProfile: RequestHandler = async (req: RequestWithFiles, res) => {
+export const updateProfile: RequestHandler = async (
+  req: RequestWithFiles,
+  res
+) => {
   const { name } = req.body;
-  const avatar = req.files?.avatar as formidable.File
+  const avatar = req.files?.avatar as formidable.File;
 
-  const user = await User.findById(req.user.id)
-  if(!user) throw new Error ("Có gì đó không đúng, không tìm thấy người dùng!")
+  const user = await User.findById(req.user.id);
+  if (!user) throw new Error("something went wrong, user not found!");
 
-  //update tên
-  if(typeof name !== "string") return res.status(422).json({error: "Tên không hợp lệ!"})
+  if (typeof name !== "string")
+    return res.status(422).json({ error: "Invalid name!" });
 
-  if(name.trim().length < 2) return res.status(422).json({error: "Tên không hợp lệ!"})
+  if (name.trim().length < 3)
+    return res.status(422).json({ error: "Invalid name!" });
 
   user.name = name;
 
-  //update avatar
-  if(avatar){
-    //Thay avatar mới từ avatar cũ
-    if(user.avatar?.publicId){
-     await cloudinary.uploader.destroy(user.avatar?.publicId)
+  if (avatar) {
+    // if there is already an avatar file, we want to remove that
+    if (user.avatar?.publicId) {
+      await cloudinary.uploader.destroy(user.avatar?.publicId);
     }
-    //Them avatar mới
-    const {secure_url, public_id} = await cloudinary.uploader.upload(avatar.filepath, {
-      width: 300,
-      heigth: 300,
-      crop: "thumb",
-      gravity: "face"
-    })
 
-    user.avatar = {url: secure_url, publicId: public_id}
+    // upload new avatar file
+    const { secure_url, public_id } = await cloudinary.uploader.upload(
+      avatar.filepath,
+      {
+        width: 300,
+        height: 300,
+        crop: "thumb",
+        gravity: "face",
+      }
+    );
+
+    user.avatar = { url: secure_url, publicId: public_id };
   }
 
-  await user.save()
+  await user.save();
 
-  res.json({ profile: formatProfile(user)})
+  res.json({ profile: formatProfile(user) });
 };
 
 //Gửi profile

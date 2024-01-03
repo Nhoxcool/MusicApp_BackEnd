@@ -73,7 +73,7 @@ export const getUploads: RequestHandler = async (req, res) => {
 
     const data = await Audio.find({owner: req.user.id}).skip(parseInt(limit) * parseInt(pageNo)).limit(parseInt(limit)).sort("-createdAt")
 
-    const audio = data.map((item) => {
+    const audios = data.map((item) => {
       return {
         id: item._id,
         title: item.title,
@@ -85,7 +85,7 @@ export const getUploads: RequestHandler = async (req, res) => {
         owner: {name: req.user.name, id: req.user.id}
       };
     })
-    res.json({audio})
+    res.json({audios})
 };
 
 export const getPublicUploads: RequestHandler = async (req, res) => {
@@ -96,7 +96,7 @@ export const getPublicUploads: RequestHandler = async (req, res) => {
 
   const data = await Audio.find({owner: profileId}).skip(parseInt(limit) * parseInt(pageNo)).limit(parseInt(limit)).sort("-createdAt").populate<AudioDocument<{name: string, _id: ObjectId}>>("owner")
 
-  const audio = data.map((item) => {
+  const audios = data.map((item) => {
     return {
       id: item._id,
       title: item.title,
@@ -107,7 +107,7 @@ export const getPublicUploads: RequestHandler = async (req, res) => {
       owner: {name: item.owner.name, id: item.owner._id}
     }
   })
-  res.json({audio})
+  res.json({audios})
 };
 
 export const getPublicProfile: RequestHandler = async (req, res) => {
